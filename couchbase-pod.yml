@@ -5,7 +5,7 @@ metadata:
   name: couchbase-pod
 spec:
   containers:
-  - name: couchbase
+  - name: arungupta/couchbase
     # Docker image that will run in this Pod
     image: couchbase
     ports:
