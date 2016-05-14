@@ -1,3 +1,17 @@
 = Couchbase on Kubernetes
 
+Create a Kubernetes cluster as:
+
+    ./kubernetes/cluster/kube-up.sh
+
+Create a Couchbase Replication Controller:
+
+    ./kubernetes/cluster/kubectl.sh create -f couchbase-rc.yml 
+
+How to rebalance?
+
+    ./kubernetes/cluster/kubectl.sh get po
+    ./kubernetes/cluster/kubectl.sh describe <pod-1>
+    ./kubernetes/cluster/kubectl.sh describe <pod-2>
+    couchbase-cli rebalance --cluster=<pod-1-ip>:8091 --user Administrator --password password --server-add=<pod-2-ip> --server-add-username=Administrator --server-add-password=password   
 
