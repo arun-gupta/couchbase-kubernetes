@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+# labels attached to this Pod
+metadata:
+  name: couchbase-pod
+spec:
+  containers:
+  - name: couchbase
+    # Docker image that will run in this Pod
+    image: couchbase
+    ports:
+    - containerPort: 8091

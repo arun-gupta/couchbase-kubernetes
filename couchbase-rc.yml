@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: couchbase-controller
+spec:
+  # Two replicas of the Pod to be created
+  replicas: 2
+  # Identifies the label key and value on the Pod that
+  # this Replication Controller is responsible for managing
+  selector:
+    app: couchbase-rc-pod
+  # 'cookie cutter' used for creating new pods when necessary
+  template:
+    metadata:
+      labels:
+        # label key and value on the pod. These must match the selector above.
+        app: couchbase-rc-pod
+    spec:
+      containers:
+      - name: couchbase
+        image: arungupta/couchbase
+        ports:
+        - containerPort: 4369
+        - containerPort: 8091
+        - containerPort: 8092
+        - containerPort: 8093
+        - containerPort: 11209
+        - containerPort: 11210
+        - containerPort: 11211
+        - containerPort: 11214
+        - containerPort: 11215
