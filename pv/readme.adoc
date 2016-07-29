@@ -1,4 +1,4 @@
-= How to use Kubernetes Persistent Volume with Couchbase with Amazon EBS
+= How to use Kubernetes Persistent Volume with Couchbase on Amazon EBS
 
 . Create a 5GB SSD volume on EBS:
 +
