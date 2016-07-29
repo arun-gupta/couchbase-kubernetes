@@ -1,0 +1,111 @@
+= How to use Kubernetes Persistent Volume with Couchbase with Amazon EBS
+
+. Create a 5GB SSD volume on EBS:
++
+```
+aws ec2 create-volume --availability-zone us-west-1a --size 5 --volume-type gp2
+{
+    "AvailabilityZone": "us-west-1a", 
+    "Encrypted": false, 
+    "VolumeType": "gp2", 
+    "VolumeId": "vol-ad7c1903", 
+    "State": "creating", 
+    "Iops": 100, 
+    "SnapshotId": "", 
+    "CreateTime": "2016-07-29T05:31:11.685Z", 
+    "Size": 5
+}
+```
++
+. Create a Persistent Volume as `kubectl create -f couchbase-pv.yml`
++
+```
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: couchbase-pv
+  labels:
+    type: amazonEBS
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  awsElasticBlockStore:
+    volumeID: vol-ad7c1903
+    fsType: ext4
+```
++
+. Create a Persistent Volume Claim as `kubectl create -f couchbase-pvc.yml`
++
+```
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: couchbase-pvc
+  labels:
+    type: amazonEBS
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+```
++
+. Create a RC with a Pod using `arungupta/couchbase` with the PVC as `kubectl create -f couchbase-rc.yml`
++
+```
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: couchbase-rc
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: couchbase-rc-pod
+      labels:
+        name: couchbase-rc-pod
+        context: couchbase-pv
+    spec:
+      containers:
+      - name: couchbase-rc-pod
+        image: arungupta/couchbase
+        volumeMounts:
+        - mountPath: "/opt/couchbase/var"
+          name: mypd
+        ports:
+        - containerPort: 8091
+        - containerPort: 8092
+        - containerPort: 8093
+        - containerPort: 11210
+      volumes:
+      - name: mypd
+        persistentVolumeClaim:
+          claimName: couchbase-pvc
+```
++
+. Create a service as `kubectl create -f couchbase-service.yml`
++
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchbase-service
+  labels:
+    name: couchbase-service
+    context: couchbase-pv
+spec:
+  ports:
+    - port: 8091
+      port: 8092
+      port: 8093
+      port: 11210
+  # label keys and values that must match in order to receive traffic for this service
+  selector:
+    name: couchbase-rc-pod
+    context: couchbase-pv
+```
+
+
