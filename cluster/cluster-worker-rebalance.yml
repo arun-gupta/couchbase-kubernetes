@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: couchbase-worker-rebalance-rc
+spec:
+  replicas: 1
+  selector:
+    app: couchbase-worker-rebalance-pod
+  template:
+    metadata:
+      labels:
+        app: couchbase-worker-rebalance-pod
+    spec:
+      containers:
+      - name: couchbase-rebalance-worker
+        image: rsmitty/couchbase
+        env:
+          - name: TYPE
+            value: "WORKER"
+          - name: COUCHBASE_MASTER
+            value: "couchbase-master-service"
+          - name: AUTO_REBALANCE
+            value: "true"
+        ports:
+        - containerPort: 8091
