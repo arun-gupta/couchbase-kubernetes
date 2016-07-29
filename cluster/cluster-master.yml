@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: couchbase-controller
+  name: couchbase-master-rc
 spec:
   replicas: 1
   selector:
@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: couchbase-master
-        image: arungupta/couchbase
+        image: rsmitty/couchbase
         env:
           - name: TYPE
             value: MASTER
@@ -23,7 +23,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata: 
-  name: couchbase-service
+  name: couchbase-master-service
   labels: 
     app: couchbase-master-service
 spec: 
@@ -31,3 +31,4 @@ spec:
     - port: 8091
   selector: 
     app: couchbase-master-pod
+  type: LoadBalancer
