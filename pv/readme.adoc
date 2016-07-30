@@ -1,24 +1,197 @@
 = How to use Kubernetes Persistent Volume bound to Amazon EBS with Couchbase
 
-. Create a 5GB SSD volume on EBS:
-+
+== Create a Volume on EBS
+
+Create a 5GB SSD volume on EBS: `aws ec2 create-volume --region us-west-2 --availability-zone us-west-2a --size 5 --volume-type gp2`. Make sure the availability zone where the Kubernetes cluster and volume is created matches.
+
+Output is:
+
 ```
-aws ec2 create-volume --availability-zone us-west-1a --size 5 --volume-type gp2
 {
-    "AvailabilityZone": "us-west-1a", 
+    "AvailabilityZone": "us-west-2a", 
     "Encrypted": false, 
     "VolumeType": "gp2", 
-    "VolumeId": "vol-ad7c1903", 
+    "VolumeId": "vol-47f59cce", 
     "State": "creating", 
     "Iops": 100, 
     "SnapshotId": "", 
-    "CreateTime": "2016-07-29T05:31:11.685Z", 
+    "CreateTime": "2016-07-29T21:57:43.343Z", 
     "Size": 5
 }
 ```
-+
-. Create a Persistent Volume as `kubectl create -f couchbase-pv.yml`
-+
+
+Check if the volume is available: `aws --region us-west-2 ec2 describe-volumes --volume-id vol-47f59cce`.
+
+Output is:
+
+```
+{
+    "Volumes": [
+        {
+            "AvailabilityZone": "us-west-2a", 
+            "Attachments": [], 
+            "Encrypted": false, 
+            "VolumeType": "gp2", 
+            "VolumeId": "vol-47f59cce", 
+            "State": "available", 
+            "Iops": 100, 
+            "SnapshotId": "", 
+            "CreateTime": "2016-07-29T21:57:43.343Z", 
+            "Size": 5
+        }
+    ]
+}
+```
+
+Note the unique identifier for the volume in `VolumeId` attribute.
+
+== Start Kubernetes Cluster
+
+```
+export KUBERNETES_PROVIDER=aws
+KUBE_AWS_ZONE=us-west-2a NODE_SIZE=m3.large NUM_NODES=3 ./kubernetes/cluster/kube-up.sh
+```
+
+Log output:
+
+```
+... Starting cluster in us-west-2a using provider aws
+... calling verify-prereqs
+... calling kube-up
+Starting cluster using os distro: jessie
+Uploading to Amazon S3
++++ Staging server tars to S3 Storage: kubernetes-staging-0eaf81fbc51209dd47c13b6d8b424149/devel
+upload: ../../../../../var/folders/81/ttv4n16x7p390cttrm_675y00000gn/T/kubernetes.XXXXXX.ISohbaGM/s3/bootstrap-script to s3://kubernetes-staging-0eaf81fbc51209dd47c13b6d8b424149/devel/bootstrap-script
+Uploaded server tars:
+  SERVER_BINARY_TAR_URL: https://s3.amazonaws.com/kubernetes-staging-0eaf81fbc51209dd47c13b6d8b424149/devel/kubernetes-server-linux-amd64.tar.gz
+  SALT_TAR_URL: https://s3.amazonaws.com/kubernetes-staging-0eaf81fbc51209dd47c13b6d8b424149/devel/kubernetes-salt.tar.gz
+  BOOTSTRAP_SCRIPT_URL: https://s3.amazonaws.com/kubernetes-staging-0eaf81fbc51209dd47c13b6d8b424149/devel/bootstrap-script
+INSTANCEPROFILE	arn:aws:iam::598307997273:instance-profile/kubernetes-master	2016-07-29T15:13:35Z	AIPAJF3XKLNKOXOTQOCTkubernetes-master	/
+ROLES	arn:aws:iam::598307997273:role/kubernetes-master	2016-07-29T15:13:33Z	/	AROAI3Q2KFBD5PCKRXCRM	kubernetes-master
+ASSUMEROLEPOLICYDOCUMENT	2012-10-17
+STATEMENT	sts:AssumeRole	Allow
+PRINCIPAL	ec2.amazonaws.com
+INSTANCEPROFILE	arn:aws:iam::598307997273:instance-profile/kubernetes-minion	2016-07-29T15:13:39Z	AIPAIYSH5DJA4UPQIP4Bkubernetes-minion	/
+ROLES	arn:aws:iam::598307997273:role/kubernetes-minion	2016-07-29T15:13:37Z	/	AROAIQ57MPQYSHRPQCT2Q	kubernetes-minion
+ASSUMEROLEPOLICYDOCUMENT	2012-10-17
+STATEMENT	sts:AssumeRole	Allow
+PRINCIPAL	ec2.amazonaws.com
+Using SSH key with (AWS) fingerprint: SHA256:dX/5wpWuUxYar2NFuGwiZuRiydiZCyx4DGoZ5/jL/j8
+Creating vpc.
+Adding tag to vpc-fa3d6c9e: Name=kubernetes-vpc
+Adding tag to vpc-fa3d6c9e: KubernetesCluster=kubernetes
+Using VPC vpc-fa3d6c9e
+Adding tag to dopt-3aad625e: Name=kubernetes-dhcp-option-set
+Adding tag to dopt-3aad625e: KubernetesCluster=kubernetes
+Using DHCP option set dopt-3aad625e
+Creating subnet.
+Adding tag to subnet-e11f5985: KubernetesCluster=kubernetes
+Using subnet subnet-e11f5985
+Creating Internet Gateway.
+Using Internet Gateway igw-5c748f38
+Associating route table.
+Creating route table
+Adding tag to rtb-84fcf1e0: KubernetesCluster=kubernetes
+Associating route table rtb-84fcf1e0 to subnet subnet-e11f5985
+Adding route to route table rtb-84fcf1e0
+Using Route Table rtb-84fcf1e0
+Creating master security group.
+Creating security group kubernetes-master-kubernetes.
+Adding tag to sg-91590bf7: KubernetesCluster=kubernetes
+Creating minion security group.
+Creating security group kubernetes-minion-kubernetes.
+Adding tag to sg-9d590bfb: KubernetesCluster=kubernetes
+Using master security group: kubernetes-master-kubernetes sg-91590bf7
+Using minion security group: kubernetes-minion-kubernetes sg-9d590bfb
+Creating master disk: size 20GB, type gp2
+Adding tag to vol-def79e57: Name=kubernetes-master-pd
+Adding tag to vol-def79e57: KubernetesCluster=kubernetes
+Allocated Elastic IP for master: 52.40.216.69
+Adding tag to vol-def79e57: kubernetes.io/master-ip=52.40.216.69
+Generating certs for alternate-names: IP:52.40.216.69,IP:172.20.0.9,IP:10.0.0.1,DNS:kubernetes,DNS:kubernetes.default,DNS:kubernetes.default.svc,DNS:kubernetes.default.svc.cluster.local,DNS:kubernetes-master
+Starting Master
+Adding tag to i-5a7cebf5: Name=kubernetes-master
+Adding tag to i-5a7cebf5: Role=kubernetes-master
+Adding tag to i-5a7cebf5: KubernetesCluster=kubernetes
+Waiting for master to be ready
+Attempt 1 to check for master nodeWaiting for instance i-5a7cebf5 to be running (currently pending)
+Sleeping for 3 seconds...
+Waiting for instance i-5a7cebf5 to be running (currently pending)
+Sleeping for 3 seconds...
+Waiting for instance i-5a7cebf5 to be running (currently pending)
+Sleeping for 3 seconds...
+Waiting for instance i-5a7cebf5 to be running (currently pending)
+Sleeping for 3 seconds...
+ [master running]
+Attaching IP 52.40.216.69 to instance i-5a7cebf5
+Attaching persistent data volume (vol-def79e57) to master
+2016-07-29T22:00:36.909Z	/dev/sdb	i-5a7cebf5	attaching	vol-def79e57
+cluster "aws_kubernetes" set.
+user "aws_kubernetes" set.
+context "aws_kubernetes" set.
+switched to context "aws_kubernetes".
+user "aws_kubernetes-basic-auth" set.
+Wrote config for aws_kubernetes to /Users/arungupta/.kube/config
+Creating minion configuration
+Creating autoscaling group
+ 0 minions started; waiting
+ 0 minions started; waiting
+ 0 minions started; waiting
+ 0 minions started; waiting
+ 3 minions started; ready
+Waiting for cluster initialization.
+
+  This will continually check to see if the API for kubernetes is reachable.
+  This might loop forever if there was some uncaught error during start
+  up.
+
+..........................................................................................................................................................................................................Kubernetes cluster created.
+Sanity checking cluster...
+Attempt 1 to check Docker on node @ 52.42.0.65 ...not working yet
+Attempt 2 to check Docker on node @ 52.42.0.65 ...not working yet
+Attempt 3 to check Docker on node @ 52.42.0.65 ...working
+Attempt 1 to check Docker on node @ 52.36.195.201 ...working
+Attempt 1 to check Docker on node @ 52.43.35.173 ...working
+
+Kubernetes cluster is running.  The master is running at:
+
+  https://52.40.216.69
+
+The user name and password to use is located in /Users/arungupta/.kube/config.
+
+... calling validate-cluster
+Found 3 node(s).
+NAME                                        STATUS    AGE
+ip-172-20-0-26.us-west-2.compute.internal   Ready     1m
+ip-172-20-0-27.us-west-2.compute.internal   Ready     1m
+ip-172-20-0-28.us-west-2.compute.internal   Ready     1m
+Validate output:
+NAME                 STATUS    MESSAGE              ERROR
+controller-manager   Healthy   ok                   
+scheduler            Healthy   ok                   
+etcd-0               Healthy   {"health": "true"}   
+etcd-1               Healthy   {"health": "true"}   
+Cluster validation succeeded
+Done, listing cluster services:
+
+Kubernetes master is running at https://52.40.216.69
+Elasticsearch is running at https://52.40.216.69/api/v1/proxy/namespaces/kube-system/services/elasticsearch-logging
+Heapster is running at https://52.40.216.69/api/v1/proxy/namespaces/kube-system/services/heapster
+Kibana is running at https://52.40.216.69/api/v1/proxy/namespaces/kube-system/services/kibana-logging
+KubeDNS is running at https://52.40.216.69/api/v1/proxy/namespaces/kube-system/services/kube-dns
+kubernetes-dashboard is running at https://52.40.216.69/api/v1/proxy/namespaces/kube-system/services/kubernetes-dashboard
+Grafana is running at https://52.40.216.69/api/v1/proxy/namespaces/kube-system/services/monitoring-grafana
+InfluxDB is running at https://52.40.216.69/api/v1/proxy/namespaces/kube-system/services/monitoring-influxdb
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+```
+
+== Create Kubernetes Artifacts
+
+=== Create a Kubernetes Persistent Volume
+
+Create a Persistent Volume as `kubectl create -f couchbase-pv.yml`. Make sure to specify the volume id from the previous step in `couchbase-pv.yml`.
+
 ```
 kind: PersistentVolume
 apiVersion: v1
@@ -32,12 +205,20 @@ spec:
   accessModes:
     - ReadWriteOnce
   awsElasticBlockStore:
-    volumeID: vol-ad7c1903
+    volumeID: vol-47f59cce
     fsType: ext4
 ```
-+
-. Create a Persistent Volume Claim as `kubectl create -f couchbase-pvc.yml`
-+
+
+Output is:
+
+```
+persistentvolume "couchbase-pv" created
+```
+
+=== Create Persistent Volume Claim
+
+Create a Persistent Volume Claim as `kubectl create -f couchbase-pvc.yml`
+
 ```
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -52,14 +233,22 @@ spec:
     requests:
       storage: 5Gi
 ```
-+
-. Create a RC with a Pod using `arungupta/couchbase` with the PVC as `kubectl create -f couchbase-rc.yml`
-+
+
+Output is:
+
+```
+persistentvolumeclaim "couchbase-pvc" created
+```
+
+=== Create a Kubernetes Replication Controller
+
+Create a RC using `arungupta/couchbase` image and claiming the PVC as `kubectl create -f couchbase-rc.yml`:
+
 ```
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: couchbase-rc
+  name: couchbase
 spec:
   replicas: 1
   template:
@@ -85,27 +274,97 @@ spec:
         persistentVolumeClaim:
           claimName: couchbase-pvc
 ```
-+
-. Create a service as `kubectl create -f couchbase-service.yml`
+
+Output is:
+
+```
+replicationcontroller "couchbase-rc" created
+```
+
+Check for Pod:
+
+```
+~/tools/kubernetes/kubernetes-1.3.3/kubernetes/cluster/kubectl.sh get -w po
+NAME              READY     STATUS              RESTARTS   AGE
+couchbase-jx3fn   0/1       ContainerCreating   0          3s
+NAME              READY     STATUS    RESTARTS   AGE
+couchbase-jx3fn   1/1       Running   0          20s
+
+```
+
+== Expose Pod on Kubernetes as Service
+
+```
+~/tools/kubernetes/kubernetes-1.3.3/kubernetes/cluster/kubectl.sh expose rc couchbase --target-port=8091 --port=8091 --type=LoadBalancer
+```
+
+Output is:
+
+```
+service "couchbase" exposed
+
+```
+
+Describe the service:
+
+```
+~/tools/kubernetes/kubernetes-1.3.3/kubernetes/cluster/kubectl.sh describe svc couchbase
+```
+
+Output is:
+
+```
+Name:			couchbase
+Namespace:		default
+Labels:			context=couchbase-pv
+			name=couchbase-pod
+Selector:		context=couchbase-pv,name=couchbase-pod
+Type:			LoadBalancer
+IP:			10.0.49.129
+LoadBalancer Ingress:	a6179426155e211e6b664022b850255f-1850736155.us-west-2.elb.amazonaws.com
+Port:			<unset>	8091/TCP
+NodePort:		<unset>	31636/TCP
+Endpoints:		10.244.1.3:8091
+Session Affinity:	None
+Events:
+  FirstSeen	LastSeen	Count	From			SubobjectPath	Type		Reason			Message
+  ---------	--------	-----	----			-------------	--------	------			-------
+  31s		31s		1	{service-controller }			Normal		CreatingLoadBalancer	Creating load balancer
+  29s		29s		1	{service-controller }			Normal		CreatedLoadBalancer	Created load balancer
+```
+
+Wait for 3 minutes for Load Balancer to settle.
+
+== Show stateful container
+
+. Open up Couchbase Web Console at `<ingress-ip>:8091`, go to Data Buckets tab and create a new data bucket.
+. Get all pods:
 +
 ```
-apiVersion: v1
-kind: Service
-metadata:
-  name: couchbase-service
-  labels:
-    name: couchbase-service
-    context: couchbase-pv
-spec:
-  ports:
-    - port: 8091
-      port: 8092
-      port: 8093
-      port: 11210
-  # label keys and values that must match in order to receive traffic for this service
-  selector:
-    name: couchbase-rc-pod
-    context: couchbase-pv
+kubectl.sh get po
+NAME              READY     STATUS    RESTARTS   AGE
+couchbase-jx3fn   1/1       Running   0          7m
 ```
++
+. Delete the pod:
++
+```
+kubectl.sh delete po couchbase-jx3fn
+pod "couchbase-jx3fn" deleted
+```
++
+. Pod gets recreated:
++
+```
+kubectl.sh get -w po
+NAME              READY     STATUS              RESTARTS   AGE
+couchbase-jx3fn   1/1       Terminating         0          8m
+couchbase-qq6wu   0/1       ContainerCreating   0          4s
+NAME              READY     STATUS    RESTARTS   AGE
+couchbase-qq6wu   1/1       Running   0          5s
+```
++
+. Access Couchbase Web Console again to see that the bucket still exists.
+
 
 
