@@ -1,4 +1,4 @@
-= Couchbase Clustering on Kubernetes
+= Couchbase Cluster on Kubernetes
 
 The files in this directory can serve as an example of how to deploy a Couchbase Server cluster on Kubernetes. Tested on GKE, Amazon as well as a self-deployed Kubernetes cluster.
 
