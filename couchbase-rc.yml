@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: couchbase-controller
+  name: couchbase-rc
 spec:
   # Two replicas of the Pod to be created
   replicas: 2
