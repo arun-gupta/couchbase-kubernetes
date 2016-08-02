@@ -1,17 +1,48 @@
 = Couchbase on Kubernetes
 
-Create a Kubernetes cluster as:
+== Start Kubernetes cluster
 
-    ./kubernetes/cluster/kube-up.sh
+```
+export KUBERNETES_PROVIDER=aws
+./cluster/kube-up.sh
+```
 
-Create a Couchbase Replication Controller:
+== Create Couchbase Service and Expose as LB
 
-    ./kubernetes/cluster/kubectl.sh create -f couchbase-rc.yml 
+Create a Service, Replication Controller with 1 replica, and expose all of this as a Load Balancer
 
-How to rebalance?
+```
+./cluster/kubectl.sh -f couchbase-service.yml
+```
+
+== Couchbase Cluster
+
+=== Implicitly (preferred)
+
+link:cluster/readme.adoc[Couchbase Cluster using Kubernetes]
+
+=== Explicitly
+
+. Create Couchbase Replication Controller with 2 replicas:
++
+
+```
+./cluster/kubectl.sh -f couchbase-rc.yml
+```
++
+. Get pods in the RC:
 
     ./kubernetes/cluster/kubectl.sh get po
+
+. Get IP address of the two pods:
+
     ./kubernetes/cluster/kubectl.sh describe <pod-1>
     ./kubernetes/cluster/kubectl.sh describe <pod-2>
+
+. Create the cluster and rebalance:
+
     couchbase-cli rebalance --cluster=<pod-1-ip>:8091 --user Administrator --password password --server-add=<pod-2-ip> --server-add-username=Administrator --server-add-password=password   
 
+== Persistent Volumes
+
+link:pv/readme.adoc[Kubernetes Persistent Volume bound to Amazon EBS with Couchbase]
