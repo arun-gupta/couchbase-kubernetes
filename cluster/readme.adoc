@@ -1,9 +1,10 @@
 = Couchbase Clustering on Kubernetes
 
-The files in this directory can serve as an example of how to deploy a cluster on Kubernetes. Tested on GKE as well as a self-deployed Kubernetes cluster.
+The files in this directory can serve as an example of how to deploy a cluster on Kubernetes. Tested on GKE, Amazon as well as a self-deployed Kubernetes cluster.
 
 == Usage
-It should be noted at the beginning that this setup depends on KubeDNS to be enabled and functional to dsuccessfully deploy.
+
+It should be noted at the beginning that this setup depends on KubeDNS to be enabled and functional to successfully deploy.
 
 . Create the image with `docker build -t $DESIRED_IMG_NAME .`
 . Update all `.yml` files with your new image name if necessary. Existing image name would work as is otherwise.
