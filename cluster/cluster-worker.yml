@@ -13,10 +13,10 @@ spec:
     spec:
       containers:
       - name: couchbase-worker
-        image: rsmitty/couchbase
+        image: arungupta/couchbase:k8s
         env:
           - name: TYPE
-            value: WORKER
+            value: "WORKER"
           - name: COUCHBASE_MASTER
             value: "couchbase-master-service"
           - name: AUTO_REBALANCE

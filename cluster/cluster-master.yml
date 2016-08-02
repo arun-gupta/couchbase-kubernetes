@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: couchbase-master
-        image: rsmitty/couchbase
+        image: arungupta/couchbase:k8s
         env:
           - name: TYPE
             value: MASTER
