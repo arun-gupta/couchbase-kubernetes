@@ -2,37 +2,64 @@
 
 The files in this directory can serve as an example of how to deploy a Couchbase Server cluster on Kubernetes. Tested on GKE, Amazon as well as a self-deployed Kubernetes cluster.
 
-== Usage
-
 It should be noted at the beginning that this setup depends on KubeDNS to be enabled and functional to successfully deploy.
 
-. Create the master node:
-+
+== Create "`master`" node
+
 ```
 kubectl create -f cluster-master.yml
 ```
-+
-This file will provision a LoadBalancer for the Web Console of the master node as well.
-+
-. Once the master is up and LB has been provisioned, connect to the WebUI by going to `$LOADBALANCER_IP:8091` in your browser
-. Create either auto-rebalancing nodes or just attach the nodes to the cluster with one of the two worker files:
-+
+
+This will provision a LoadBalancer for the Web Console of the master node.
+
+Use `kubectl describe svc couchbase-master-service` to get the IP address of `LOAD_BALANCER`. Give ~3 mins for laod balancer to be ready. Connect to the Web Console by going to `$LOADBALANCER_IP:8091` in your browser.
+
+== Attach "`worker`" node
+
+Attach worker node to the cluster:
+
 ```
 kubectl create -f cluster-worker.yml
 ```
-+
-OR
-+
+
+Rebalance the cluster using the Web Console.
+
+Alternatively, attach the node and rebalance the cluster in one command:
+
 ```
-kubectl create -f cluster-worker-rebalance.yml
+kubectl create -e AUTO_REBALANCE=true -f cluster-worker.yml
 ```
-. Scale workers with the normal scaling commands for Replication Controllers:
-+
+
+== Run Application
+
+Run the application
+
+```
+kubectl create -f client-service.yml
+```
+
+This will provision a Load Balancer for the WildFly application server.
+
+Describe service using `kubectl describe svc/client-service`. Access the endpoint `curl http://$LOADBALANCER_IP:8080/couchbase-javaee/resources/airline`
+
+This will show the output:
+
+```
+curl http://a5b669ab9907711e68bf502342b4e804-1085842488.us-west-2.elb.amazonaws.com:8080/couchbase-javaee/resources/airline
+[{"travel-sample":{"country":"United States","iata":"Q5","callsign":"MILE-AIR","name":"40-Mile Air","icao":"MLA","id":10,"type":"airline"}}, {"travel-sample":{"country":"United States","iata":"TQ","callsign":"TXW","name":"Texas Wings","icao":"TXW","id":10123,"type":"airline"}}, {"travel-sample":{"country":"United States","iata":"A1","callsign":"atifly","name":"Atifly","icao":"A1F","id":10226,"type":"airline"}}, {"travel-sample":{"country":"United Kingdom","iata":null,"callsign":null,"name":"Jc royal.britannica","icao":"JRB","id":10642,"type":"airline"}}, {"travel-sample":{"country":"United States","iata":"ZQ","callsign":"LOCAIR","name":"Locair","icao":"LOC","id":10748,"type":"airline"}}, {"travel-sample":{"country":"United States","iata":"K5","callsign":"SASQUATCH","name":"SeaPort Airlines","icao":"SQH","id":10765,"type":"airline"}}, {"travel-sample":{"country":"United States","iata":"KO","callsign":"ACE AIR","name":"Alaska Central Express","icao":"AER","id":109,"type":"airline"}}, {"travel-sample":{"country":"United Kingdom","iata":"5W","callsign":"FLYSTAR","name":"Astraeus","icao":"AEU","id":112,"type":"airline"}}, {"travel-sample":{"country":"France","iata":"UU","callsign":"REUNION","name":"Air Austral","icao":"REU","id":1191,"type":"airline"}}, {"travel-sample":{"country":"France","iata":"A5","callsign":"AIRLINAIR","name":"Airlinair","icao":"RLA","id":1203,"type":"airline"}}]
+```
+
+== Scale Couchbase Cluster
+
+Scale Couchbase cluster using scaling commands for worker RC:
+
 ```
 kubectl scale rc couchbase-worker-rebalance-rc --replicas=3
 ```
 
-=== Build your own image
+== Build your own image
 
 . Create the image with `docker build -t $DESIRED_IMG_NAME .`
-. Update all `.yml` files with your new image name if necessary.
+. Update `cluster-master.yml` and `cluster-worker.yml` with your new image name, if necessary.
+. `arungupta/couchbase-javaee` is built from https://github.com/arun-gupta/couchbase-javaee. Use the command `mvn clean package -Pdocker`.
+
