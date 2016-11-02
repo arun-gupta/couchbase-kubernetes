@@ -16,7 +16,7 @@ spec:
         image: arungupta/couchbase:k8s
         ports:
         - containerPort: 8091
-----
+---
 apiVersion: v1
 kind: Service
 metadata: 
