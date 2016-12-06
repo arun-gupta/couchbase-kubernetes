@@ -1,2 +1,56 @@
 = Couchbase Cluster with PetSet and PortWorx
 
+. Start Kubernetes cluster:
++
+```
+export KUBERNETES_PROVIDER=aws
+NODE_SIZE=m3.medium MASTER_SIZE=m3.medium ./cluster/kube-up.sh
+```
++
+. Create 4 EBS volumes using the command: `aws ec2 create-volume --region us-west-2 --availability-zone us-west-2a --volume-type io1 --iops 1000 --size 128`
+. Get the volume ids: `vol-df734157`, `vol-ce734146`, `vol-ec734164`, `vol-cf734147`
+. Get the instance ids for minions: `i-1551c980`, `i-1651c983`, `i-1751c982`, `i-e853cb7d`
+. Make sure AWS CLI is configured correctly for `us-west-2` region: `aws configure`
+. Attach a volume to each instance:
++
+```
+aws ec2 attach-volume --volume-id <volume-id> --instance-id <instance-id> --device /dev/sdf
+```
++
+For example:
+```
+aws ec2 attach-volume --volume-id vol-df734157 --instance-id i-1551c980 --device /dev/sdk
+aws ec2 attach-volume --volume-id vol-ce734146 --instance-id i-1651c983 --device /dev/sdk
+aws ec2 attach-volume --volume-id vol-ec734164 --instance-id i-1751c982 --device /dev/sdk
+aws ec2 attach-volume --volume-id vol-cf734147 --instance-id i-e853cb7d --device /dev/sdk
+```
++
+. Optional verification
+.. Log in to minion: `ssh -i ~/.ssh/kube_aws_rsa admin@ec2-35-163-18-206.us-west-2.compute.amazonaws.com`
+.. Verify etcd: `curl -fs -X PUT "http://ip-172-20-0-9.us-west-2.compute.internal:2379/v2/keys/_test"`
+. For each minion
+.. ssh minion: `ssh -i ~/.ssh/kube_aws_rsa admin@<public-ip>`
+.. `sudo vi /lib/systemd/system/docker.service`
+.. Comment `MountFlags=slave`
+.. `sudo systemctl daemon-reload`
+.. `sudo systemctl restart docker`
+. Run this command:
++
+```
+sudo docker run --restart=always --name px -d --net=host \
+   --privileged=true \
+   -v /run/docker/plugins:/run/docker/plugins \
+   -v /var/lib/osd:/var/lib/osd:shared \
+   -v /dev:/dev \
+   -v /etc/pwx:/etc/pwx \
+   -v /opt/pwx/bin:/export_bin \
+   -v /usr/libexec/kubernetes/kubelet-plugins/volume/exec/px~flexvolume:/export_flexvolume:shared \
+   -v /var/run/docker.sock:/var/run/docker.sock \
+   -v /var/cores:/var/cores \
+   -v /var/lib/kubelet:/var/lib/kubelet:shared \
+   --ipc=host \
+   portworx/px-enterprise -k etcd://ip-172-20-0-9.us-west-2.compute.internal:2379 -c mycluster_id -a -f
+```
++
+.
+
