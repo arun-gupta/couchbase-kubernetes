@@ -16,13 +16,60 @@ export KUBERNETES_PROVIDER=aws
 KUBE_OS_DISTRIBUTION=wily NODE_SIZE=m3.medium MASTER_SIZE=m3.medium ./cluster/kube-up.sh
 ```
 +
-.. Default distribution is Debian and had issues starting up Portworx container
-.. Default `NODE_SIZE` is `t2.medium`. This is not sufficient for running Couchbase node and PWX container.
-. Create EBS volume using the command: `aws ec2 create-volume --region us-west-2 --availability-zone us-west-2a --volume-type io1 --iops 1000 --size 128`
-.. Run the command 4 times. One volume is attached to each node.
-. Get the volume ids: `vol-df734157`, `vol-ce734146`, `vol-ec734164`, `vol-cf734147`
-. Get the instance ids for minions: `i-b27ee627`, `i-b37ee626`, `i-b47ee621`, `i-b57ee620`
+.. Default distribution is Debian and had issues starting Portworx container
+.. Default `NODE_SIZE` is `t2.medium`. This is not sufficient for running Couchbase and PWX container
 . Make sure AWS CLI is configured correctly for `us-west-2` region: `aws configure`
+. Create EBS volume
++
+```
+aws ec2 create-volume --region us-west-2 --availability-zone us-west-2a --volume-type io1 --iops 1000 --size 128
+```
++
+.. Run the command 4 times. One volume is attached to each node.
+. Get the volume ids
++
+```
+aws ec2 describe-volumes --filters "Name=size, Values=128" --query 'Volumes[*].{ID:VolumeId}'
+```
++
+This will show the result:
++
+```
+[
+    {
+        "ID": "vol-ce734146"
+    }, 
+    {
+        "ID": "vol-cf734147"
+    }, 
+    {
+        "ID": "vol-df734157"
+    }, 
+    {
+        "ID": "vol-ec734164"
+    }
+]
+```
++
+. Get the instance ids for all minions
++
+```
+aws ec2 describe-instances --filters "Name=tag:Role, Values=kubernetes-minion" --query 'Reservations[*].Instances[*].InstanceId'
+```
++
+This will show output as:
++
+```
+[
+    [
+        "i-b57ee620", 
+        "i-b47ee621", 
+        "i-b37ee626", 
+        "i-b27ee627"
+    ]
+]
+```
++
 . Attach a volume to each instance:
 +
 ```
