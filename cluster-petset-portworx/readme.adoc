@@ -4,12 +4,13 @@
 +
 ```
 export KUBERNETES_PROVIDER=aws
-NODE_SIZE=m3.medium MASTER_SIZE=m3.medium ./cluster/kube-up.sh
+KUBE_OS_DISTRIBUTION=wily NODE_SIZE=m3.medium MASTER_SIZE=m3.medium ./cluster/kube-up.sh
 ```
 +
+.. Default distribution is Debian and had issues starting up Portworx container
 . Create 4 EBS volumes using the command: `aws ec2 create-volume --region us-west-2 --availability-zone us-west-2a --volume-type io1 --iops 1000 --size 128`
 . Get the volume ids: `vol-df734157`, `vol-ce734146`, `vol-ec734164`, `vol-cf734147`
-. Get the instance ids for minions: `i-1551c980`, `i-1651c983`, `i-1751c982`, `i-e853cb7d`
+. Get the instance ids for minions: `i-b27ee627`, `i-b37ee626`, `i-b47ee621`, `i-b57ee620`
 . Make sure AWS CLI is configured correctly for `us-west-2` region: `aws configure`
 . Attach a volume to each instance:
 +
@@ -19,22 +20,22 @@ aws ec2 attach-volume --volume-id <volume-id> --instance-id <instance-id> --devi
 +
 For example:
 ```
-aws ec2 attach-volume --volume-id vol-df734157 --instance-id i-1551c980 --device /dev/sdk
-aws ec2 attach-volume --volume-id vol-ce734146 --instance-id i-1651c983 --device /dev/sdk
-aws ec2 attach-volume --volume-id vol-ec734164 --instance-id i-1751c982 --device /dev/sdk
-aws ec2 attach-volume --volume-id vol-cf734147 --instance-id i-e853cb7d --device /dev/sdk
+aws ec2 attach-volume --volume-id vol-df734157 --instance-id i-b27ee627 --device /dev/sdk
+aws ec2 attach-volume --volume-id vol-ce734146 --instance-id i-b37ee626 --device /dev/sdk
+aws ec2 attach-volume --volume-id vol-ec734164 --instance-id i-b47ee621 --device /dev/sdk
+aws ec2 attach-volume --volume-id vol-cf734147 --instance-id i-b57ee620 --device /dev/sdk
 ```
 +
 . Optional verification
-.. Log in to minion: `ssh -i ~/.ssh/kube_aws_rsa admin@ec2-35-163-18-206.us-west-2.compute.amazonaws.com`
-.. Verify etcd: `curl -fs -X PUT "http://ip-172-20-0-9.us-west-2.compute.internal:2379/v2/keys/_test"`
-. For each minion
+.. Log in to minion: `ssh -i ~/.ssh/kube_aws_rsa admin@<master-ip-public>`
+.. Verify etcd: `curl -fs -X PUT "http://<master-ip-internal>:2379/v2/keys/_test"`
+. For each minion (because Kubernetes 1.4.5 uses 1.11.2, works OOTB on 1.12)
 .. ssh minion: `ssh -i ~/.ssh/kube_aws_rsa admin@<public-ip>`
 .. `sudo vi /lib/systemd/system/docker.service`
 .. Comment `MountFlags=slave`
 .. `sudo systemctl daemon-reload`
 .. `sudo systemctl restart docker`
-. Run this command:
+. On each host, start PWX container:
 +
 ```
 sudo docker run --restart=always --name px -d --net=host \
@@ -49,7 +50,7 @@ sudo docker run --restart=always --name px -d --net=host \
    -v /var/cores:/var/cores \
    -v /var/lib/kubelet:/var/lib/kubelet:shared \
    --ipc=host \
-   portworx/px-enterprise -k etcd://ip-172-20-0-9.us-west-2.compute.internal:2379 -c mycluster_id -a -f
+   portworx/px-enterprise -k etcd:http://etcd-us-east-1b.portworx.com:4001 -c couchbase_portworx2 -a -f
 ```
 +
 .
