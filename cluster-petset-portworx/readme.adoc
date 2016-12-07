@@ -2,9 +2,10 @@
 
 == Why Portworx?
 
-. Availability across zones: STORY
-. VALUE 2
-. VALUE 3
+. *Container granular volumes* - Portworx can take multiple EBS volumes per host and aggregate the capacity and derive container granular virtual (soft) volumes per container.
+. *Cross Availability Zone HA* - Portworx will protect the data, at block level, across multiple compute instances across availability zones.  As replication controllers restart pods on different nodes, the data will still be highly available on those nodes.
+. *Support for enterprise data operations* - Portworx implements container granular snapshots, class of service, tiering on top of the available physical volumes.
+. *Ease of deployment and provisioning* - Portworx itself is deployed as a container and integrated with the orchestration tools.  DevOps can programmatically provision container granular storage with any property such as size, class of service, encryption key etc.
 
 == Portworx on Kubernetes
 
@@ -36,11 +37,9 @@ aws ec2 attach-volume --volume-id vol-ec734164 --instance-id i-b47ee621 --device
 aws ec2 attach-volume --volume-id vol-cf734147 --instance-id i-b57ee620 --device /dev/sdk
 ```
 +
-. Optional verification
-.. Log in to minion: `ssh -i ~/.ssh/kube_aws_rsa admin@<master-ip-public>`
-.. Verify etcd: `curl -fs -X PUT "http://<master-ip-internal>:2379/v2/keys/_test"`
 . For each minion (because Kubernetes 1.4.5 uses 1.11.2, works OOTB on 1.12)
-.. ssh minion: `ssh -i ~/.ssh/kube_aws_rsa admin@<public-ip>`
+.. ssh minion: `ssh -i ~/.ssh/kube_aws_rsa ubuntu@<public-ip>`
+.. Use this command for default Debian: `ssh -i ~/.ssh/kube_aws_rsa admin@<public-ip>`
 .. `sudo vi /lib/systemd/system/docker.service`
 .. Comment `MountFlags=slave`
 .. `sudo systemctl daemon-reload`
@@ -63,7 +62,66 @@ sudo docker run --restart=always --name px -d --net=host \
    portworx/px-enterprise -k etcd:http://etcd-us-east-1b.portworx.com:4001 -c couchbase_portworx2 -a -f
 ```
 +
-.
+.. Check the status:
++
+```
+sudo /opt/pwx/bin/pxctl status
+Status: PX is operational
+Node ID: 54b41d07-7508-4167-8438-32faf390263e
+	IP: 172.20.0.231 
+ 	Local Storage Pool: 1 pool
+	Pool	Cos		Size	Used	Status	Zone	Region
+	0	COS_TYPE_LOW	128 GiB	2.0 GiB	Online	a	us-west-2
+	Local Storage Devices: 1 device
+	Device	Path		Media Type		Size		Last-Scan
+	0:1	/dev/xvdk	STORAGE_MEDIUM_SSD	128 GiB		07 Dec 16 00:19 UTC
+	total			-			128 GiB
+Cluster Summary
+	Cluster ID: couchbase_portworx2
+	Node IP: 172.20.0.231 - Capacity: 0 B/128 GiB Online (This node)
+Global Storage Pool
+	Total Used    	:  0 B
+	Total Capacity	:  128 GiB
+```
++
+After all four nodes are provisioned with PWX, status looks like:
++
+```
+sudo /opt/pwx/bin/pxctl status
+Status: PX is operational
+Node ID: aa8b5ce9-dc23-4b98-b5c4-491b9edb619e
+	IP: 172.20.0.229 
+ 	Local Storage Pool: 1 pool
+	Pool	Cos		Size	Used	Status	Zone	Region
+	0	COS_TYPE_LOW	128 GiB	2.0 GiB	Online	a	us-west-2
+	Local Storage Devices: 1 device
+	Device	Path		Media Type		Size		Last-Scan
+	0:1	/dev/xvdk	STORAGE_MEDIUM_SSD	128 GiB		07 Dec 16 00:30 UTC
+	total			-			128 GiB
+Cluster Summary
+	Cluster ID: couchbase_portworx2
+	Node IP: 172.20.0.228 - Capacity: 2.0 GiB/128 GiB Online
+	Node IP: 172.20.0.231 - Capacity: 2.0 GiB/128 GiB Online
+	Node IP: 172.20.0.230 - Capacity: 2.0 GiB/128 GiB Online
+	Node IP: 172.20.0.229 - Capacity: 2.0 GiB/128 GiB Online (This node)
+Global Storage Pool
+	Total Used    	:  8.1 GiB
+	Total Capacity	:  512 GiB
+```
++
+. Create 2 PWX volumes (on any Kubernetes worker host) - volumes are visible cluster-wide
+.. `sudo /opt/pwx/bin/pxctl volume create couchbase1`
+.. `sudo /opt/pwx/bin/pxctl volume create couchbase2`
+. Create 2 PV - make sure to change `name` and `volumeID` attribute values
+.. `./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/pv.yaml`
+.. `./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/pv.yaml`
+. 
 
 == Couchbase with Portworx on Kubernetes
 
+
+== Misc
+
+. Optional verification
+.. Log in to minion: `ssh -i ~/.ssh/kube_aws_rsa admin@<master-ip-public>`
+.. Verify etcd: `curl -fs -X PUT "http://<master-ip-internal>:2379/v2/keys/_test"`
