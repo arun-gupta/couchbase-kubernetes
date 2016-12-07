@@ -1,5 +1,13 @@
 = Couchbase Cluster with PetSet and PortWorx
 
+== Why Portworx?
+
+. Availability across zones: STORY
+. VALUE 2
+. VALUE 3
+
+== Portworx on Kubernetes
+
 . Start Kubernetes cluster:
 +
 ```
@@ -8,7 +16,9 @@ KUBE_OS_DISTRIBUTION=wily NODE_SIZE=m3.medium MASTER_SIZE=m3.medium ./cluster/ku
 ```
 +
 .. Default distribution is Debian and had issues starting up Portworx container
-. Create 4 EBS volumes using the command: `aws ec2 create-volume --region us-west-2 --availability-zone us-west-2a --volume-type io1 --iops 1000 --size 128`
+.. Default `NODE_SIZE` is `t2.medium`. This is not sufficient for running Couchbase node and PWX container.
+. Create EBS volume using the command: `aws ec2 create-volume --region us-west-2 --availability-zone us-west-2a --volume-type io1 --iops 1000 --size 128`
+.. Run the command 4 times. One volume is attached to each node.
 . Get the volume ids: `vol-df734157`, `vol-ce734146`, `vol-ec734164`, `vol-cf734147`
 . Get the instance ids for minions: `i-b27ee627`, `i-b37ee626`, `i-b47ee621`, `i-b57ee620`
 . Make sure AWS CLI is configured correctly for `us-west-2` region: `aws configure`
@@ -54,4 +64,6 @@ sudo docker run --restart=always --name px -d --net=host \
 ```
 +
 .
+
+== Couchbase with Portworx on Kubernetes
 
