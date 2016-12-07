@@ -1,6 +1,6 @@
-= Couchbase Cluster with PetSet and PortWorx
+= Couchbase Cluster with PetSet and Portworx
 
-== Why Portworx?
+== Why https://portworx.com/[Portworx]?
 
 . *Container granular volumes* - Portworx can take multiple EBS volumes per host and aggregate the capacity and derive container granular virtual (soft) volumes per container.
 . *Cross Availability Zone HA* - Portworx will protect the data, at block level, across multiple compute instances across availability zones.  As replication controllers restart pods on different nodes, the data will still be highly available on those nodes.
@@ -89,7 +89,7 @@ aws ec2 attach-volume --volume-id vol-cf734147 --instance-id i-b57ee620 --device
 .. ssh minion: `ssh -i ~/.ssh/kube_aws_rsa ubuntu@<public-ip>`
 .. Use this command for default Debian: `ssh -i ~/.ssh/kube_aws_rsa admin@<public-ip>`
 .. `sudo vi /lib/systemd/system/docker.service`
-.. Comment `MountFlags=slave`
+.. Comment `MountFlags=slave` using `#`
 .. `sudo systemctl daemon-reload`
 .. `sudo systemctl restart docker`
 . On each host, start PWX container:
@@ -110,7 +110,7 @@ sudo docker run --restart=always --name px -d --net=host \
    portworx/px-enterprise -k etcd:http://etcd-us-east-1b.portworx.com:4001 -c couchbase_portworx2 -a -f
 ```
 +
-.. Check the status:
+.. Check status:
 +
 ```
 sudo /opt/pwx/bin/pxctl status
@@ -156,7 +156,9 @@ Global Storage Pool
 	Total Used    	:  8.1 GiB
 	Total Capacity	:  512 GiB
 ```
-+
+
+== Couchbase with Portworx on Kubernetes
+
 . Create 2 PWX volumes (on any Kubernetes worker host) - volumes are visible cluster-wide
 .. `sudo /opt/pwx/bin/pxctl volume create couchbase1`
 .. `sudo /opt/pwx/bin/pxctl volume create couchbase2`
@@ -164,8 +166,6 @@ Global Storage Pool
 .. `./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/pv.yaml`
 .. `./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/pv.yaml`
 . 
-
-== Couchbase with Portworx on Kubernetes
 
 
 == Misc
