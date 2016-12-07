@@ -85,11 +85,11 @@ aws ec2 attach-volume --volume-id vol-ec734164 --instance-id i-b47ee621 --device
 aws ec2 attach-volume --volume-id vol-cf734147 --instance-id i-b57ee620 --device /dev/sdk
 ```
 +
-. For each minion (because Kubernetes 1.4.5 uses 1.11.2, works OOTB on 1.12)
+. Kubernetes 1.4.5 uses Docker 1.11.2 and thus volumes need to be mounted
+. For each minion (because , works OOTB on 1.12)
 .. ssh minion: `ssh -i ~/.ssh/kube_aws_rsa ubuntu@<public-ip>`
 .. Use this command for default Debian: `ssh -i ~/.ssh/kube_aws_rsa admin@<public-ip>`
-.. `sudo vi /lib/systemd/system/docker.service`
-.. Comment `MountFlags=slave` using `#`
+.. `sudo sed -i 's/MountFlags/#MountFlags/g' /lib/systemd/system/docker.service` (Since Portworx itself runs as a container, it requires `MountFlags=shared` flag (or `MountFlags=slave` to be not set) in order for it to export volumes to other containers. More details at https://github.com/docker/docker/pull/17034)
 .. `sudo systemctl daemon-reload`
 .. `sudo systemctl restart docker`
 . On each host, start PWX container:
@@ -165,8 +165,6 @@ Global Storage Pool
 . Create 2 PV - make sure to change `name` and `volumeID` attribute values
 .. `./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/pv.yaml`
 .. `./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/pv.yaml`
-. 
-
 
 == Misc
 
