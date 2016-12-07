@@ -30,6 +30,7 @@ aws ec2 attach-volume --volume-id <volume-id> --instance-id <instance-id> --devi
 ```
 +
 For example:
++
 ```
 aws ec2 attach-volume --volume-id vol-df734157 --instance-id i-b27ee627 --device /dev/sdk
 aws ec2 attach-volume --volume-id vol-ce734146 --instance-id i-b37ee626 --device /dev/sdk
@@ -84,7 +85,7 @@ Global Storage Pool
 	Total Capacity	:  128 GiB
 ```
 +
-After all four nodes are provisioned with PWX, status looks like:
+After all four nodes are provisioned with PWX container, status looks like:
 +
 ```
 sudo /opt/pwx/bin/pxctl status
