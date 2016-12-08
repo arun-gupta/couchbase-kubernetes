@@ -85,7 +85,7 @@ aws ec2 attach-volume --volume-id vol-ec734164 --instance-id i-b47ee621 --device
 aws ec2 attach-volume --volume-id vol-cf734147 --instance-id i-b57ee620 --device /dev/sdk
 ```
 +
-. Kubernetes 1.4.5 uses Docker 1.11.2. Since Portworx itself runs as a container, it requires `MountFlags=shared` flag (or `MountFlags=slave` to be not set) in order for it to export volumes to other containers. More details at https://github.com/docker/docker/pull/17034. This works OOTB on 1.12.
+. Kubernetes 1.4.5 uses Docker 1.11.2. Since Portworx itself runs as a container, it requires `MountFlags=shared` flag (or `MountFlags=slave` to be not set) in order for it to export volumes to other containers. More details at https://github.com/docker/docker/pull/17034. This works OOTB on Docker 1.12 and will have to wait when Kubernetes picks up that release.
 .. Get public IP addresses for all minions:
 +
 ```
@@ -95,10 +95,7 @@ aws ec2 describe-instances --filters "Name=tag:Role, Values=kubernetes-minion" -
 .. For each public IP address
 +
 ```
-ssh -i ~/.ssh/kube_aws_rsa -o StrictHostKeyChecking=no ubuntu@<public-ip> "sudo sed -i 's/MountFlags/#MountFlags/g' /lib/systemd/system/docker.service; \
-sudo systemctl daemon-reload; 
-sudo systemctl restart docker;
-sudo docker run --restart=always --name px -d --net=host \
+ssh -i ~/.ssh/kube_aws_rsa -o StrictHostKeyChecking=no ubuntu@<public-ip> "sudo sed -i 's/MountFlags/#MountFlags/g' /lib/systemd/system/docker.service; sudo systemctl daemon-reload; sudo systemctl restart docker; sudo docker run --restart=always --name px -d --net=host \
    --privileged=true \
    -v /run/docker/plugins:/run/docker/plugins \
    -v /var/lib/osd:/var/lib/osd:shared \
