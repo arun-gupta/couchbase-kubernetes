@@ -16,7 +16,7 @@ export KUBERNETES_PROVIDER=aws
 KUBE_OS_DISTRIBUTION=wily NODE_SIZE=m3.medium MASTER_SIZE=m3.medium ./cluster/kube-up.sh
 ```
 +
-.. Default distribution is Debian and had issues starting Portworx container
+.. Default distribution for Kubernetes cluster uses Debian operating system. There were issues starting Portworx container on it (TODO: Add bug link)
 .. Default `NODE_SIZE` is `t2.medium`. This is not sufficient for running Couchbase and PWX container
 . Make sure AWS CLI is configured correctly for `us-west-2` region: `aws configure`
 . Create EBS volume
@@ -85,8 +85,11 @@ aws ec2 attach-volume --volume-id vol-ec734164 --instance-id i-b47ee621 --device
 aws ec2 attach-volume --volume-id vol-cf734147 --instance-id i-b57ee620 --device /dev/sdk
 ```
 +
-. Kubernetes 1.4.5 uses Docker 1.11.2. Since Portworx itself runs as a container, it requires `MountFlags=shared` flag (or `MountFlags=slave` to be not set) in order for it to export volumes to other containers. More details at https://github.com/docker/docker/pull/17034. This works OOTB on Docker 1.12 and will have to wait when Kubernetes picks up that release.
-.. Get public IP addresses for all minions:
+. Kubernetes 1.4.5 uses Docker 1.11.2. Since Portworx itself runs as a container, it requires `MountFlags=shared` flag (or `MountFlags=slave` to be not set) in order for it to export volumes to other containers. More details at https://github.com/docker/docker/pull/17034.
++
+This works OOTB on Docker 1.12. For a seamless experience, will have to wait for Kubernetes to pick up that release.
++
+.. Get public IP addresses of all minions:
 +
 ```
 aws ec2 describe-instances --filters "Name=tag:Role, Values=kubernetes-minion" --query 'Reservations[*].Instances[*].PublicDnsName'
