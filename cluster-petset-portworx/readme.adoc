@@ -85,16 +85,19 @@ aws ec2 attach-volume --volume-id vol-ec734164 --instance-id i-b47ee621 --device
 aws ec2 attach-volume --volume-id vol-cf734147 --instance-id i-b57ee620 --device /dev/sdk
 ```
 +
-. Kubernetes 1.4.5 uses Docker 1.11.2 and thus volumes need to be mounted
-. For each minion (because , works OOTB on 1.12)
-.. ssh minion: `ssh -i ~/.ssh/kube_aws_rsa ubuntu@<public-ip>`
-.. Use this command for default Debian: `ssh -i ~/.ssh/kube_aws_rsa admin@<public-ip>`
-.. `sudo sed -i 's/MountFlags/#MountFlags/g' /lib/systemd/system/docker.service` (Since Portworx itself runs as a container, it requires `MountFlags=shared` flag (or `MountFlags=slave` to be not set) in order for it to export volumes to other containers. More details at https://github.com/docker/docker/pull/17034)
-.. `sudo systemctl daemon-reload`
-.. `sudo systemctl restart docker`
-. On each host, start PWX container:
+. Kubernetes 1.4.5 uses Docker 1.11.2. Since Portworx itself runs as a container, it requires `MountFlags=shared` flag (or `MountFlags=slave` to be not set) in order for it to export volumes to other containers. More details at https://github.com/docker/docker/pull/17034. This works OOTB on 1.12.
+.. Get public IP addresses for all minions:
 +
 ```
+aws ec2 describe-instances --filters "Name=tag:Role, Values=kubernetes-minion" --query 'Reservations[*].Instances[*].PublicDnsName'
+```
++
+.. For each public IP address
++
+```
+ssh -i ~/.ssh/kube_aws_rsa -o StrictHostKeyChecking=no ubuntu@<public-ip> "sudo sed -i 's/MountFlags/#MountFlags/g' /lib/systemd/system/docker.service; \
+sudo systemctl daemon-reload; 
+sudo systemctl restart docker;
 sudo docker run --restart=always --name px -d --net=host \
    --privileged=true \
    -v /run/docker/plugins:/run/docker/plugins \
@@ -107,13 +110,13 @@ sudo docker run --restart=always --name px -d --net=host \
    -v /var/cores:/var/cores \
    -v /var/lib/kubelet:/var/lib/kubelet:shared \
    --ipc=host \
-   portworx/px-enterprise -k etcd:http://etcd-us-east-1b.portworx.com:4001 -c couchbase_portworx2 -a -f
+   portworx/px-enterprise -k etcd:http://etcd-us-east-1b.portworx.com:4001 -c couchbase_portworx2 -a -f"
 ```
 +
-.. Check status:
+.. Check status of the provisioned drive:
 +
 ```
-sudo /opt/pwx/bin/pxctl status
+ssh -i ~/.ssh/kube_aws_rsa -o StrictHostKeyChecking=no ubuntu@<public-ip> "sudo /opt/pwx/bin/pxctl status"
 Status: PX is operational
 Node ID: 54b41d07-7508-4167-8438-32faf390263e
 	IP: 172.20.0.231 
