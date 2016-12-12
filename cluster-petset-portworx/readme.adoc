@@ -16,16 +16,15 @@ export KUBERNETES_PROVIDER=aws
 KUBE_OS_DISTRIBUTION=wily NODE_SIZE=m3.medium MASTER_SIZE=m3.medium ./cluster/kube-up.sh
 ```
 +
-.. Default distribution for Kubernetes cluster uses Debian operating system. There were issues starting Portworx container on it (TODO: Add bug link)
-.. Default `NODE_SIZE` is `t2.medium`. This is not sufficient for running Couchbase and PWX container
-. Make sure AWS CLI is configured correctly for `us-west-2` region: `aws configure`
-. Create EBS volume
+.. Default distribution for Kubernetes cluster uses Debian operating system. There were issues starting Portworx container on it (TODO: Add bug link).
+.. Default `NODE_SIZE` is `t2.medium`. This is not sufficient for running Couchbase and PWX container.
+. Make sure AWS CLI is configured correctly for `us-west-2` region. Use the command `aws configure`, in case you need to.
+. Create 4 EBS volumes one for each node:
 +
 ```
 aws ec2 create-volume --region us-west-2 --availability-zone us-west-2a --volume-type io1 --iops 1000 --size 128
 ```
 +
-.. Run the command 4 times. One volume is attached to each node.
 . Get the volume ids
 +
 ```
@@ -110,7 +109,7 @@ ssh -i ~/.ssh/kube_aws_rsa -o StrictHostKeyChecking=no ubuntu@<public-ip> "sudo 
    -v /var/cores:/var/cores \
    -v /var/lib/kubelet:/var/lib/kubelet:shared \
    --ipc=host \
-   portworx/px-enterprise -k etcd:http://etcd-us-east-1b.portworx.com:4001 -c couchbase_portworx2 -a -f"
+   portworx/px-enterprise -k etcd:http://etcd-us-east-1b.portworx.com:4001 -c <cluster-name> -a -f"
 ```
 +
 .. Check status of the provisioned drive:
