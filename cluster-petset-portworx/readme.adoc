@@ -97,7 +97,10 @@ aws ec2 describe-instances --filters "Name=tag:Role, Values=kubernetes-minion" -
 .. For each public IP address
 +
 ```
-ssh -i ~/.ssh/kube_aws_rsa -o StrictHostKeyChecking=no ubuntu@<public-ip> "sudo sed -i 's/MountFlags/#MountFlags/g' /lib/systemd/system/docker.service; sudo systemctl daemon-reload; sudo systemctl restart docker; sudo docker run --restart=always --name px -d --net=host \
+ssh -i ~/.ssh/kube_aws_rsa -o StrictHostKeyChecking=no ubuntu@<public-ip> "sudo sed -i 's/MountFlags/#MountFlags/g' /lib/systemd/system/docker.service; \
+   sudo systemctl daemon-reload; \
+   sudo systemctl restart docker; \
+   sudo docker run --restart=always --name px -d --net=host \
    --privileged=true \
    -v /run/docker/plugins:/run/docker/plugins \
    -v /var/lib/osd:/var/lib/osd:shared \
