@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-pwx
+  name: pv-pwx1
 spec:
   capacity:
-    storage: <volume-size>
+    storage: 1Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Recycle
@@ -12,6 +12,24 @@ spec:
     driver: "px/flexvolume"
     fsType: "ext4"
     options:
-      volumeID: "<portworx-volume-name>"
-      size: "<volume-size>"
+      volumeID: "couchbase1"
+      size: "1Gi"
+      osdDriver: "pxd"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-pwx2
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  flexVolume:
+    driver: "px/flexvolume"
+    fsType: "ext4"
+    options:
+      volumeID: "couchbase2"
+      size: "1Gi"
       osdDriver: "pxd"

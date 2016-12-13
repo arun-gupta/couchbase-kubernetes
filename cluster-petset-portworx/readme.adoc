@@ -130,8 +130,7 @@ Global Storage Pool
 . Create 2 PWX volumes (on any Kubernetes worker host) - volumes are visible cluster-wide
 .. `sudo /opt/pwx/bin/pxctl volume create couchbase1`
 .. `sudo /opt/pwx/bin/pxctl volume create couchbase2`
-. Create 2 PV - make sure to change `name` and `volumeID` attribute values
-.. `./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/pv.yaml`
+. Create 2 PV
 .. `./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/pv.yaml`
 
 == Misc
