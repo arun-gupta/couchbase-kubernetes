@@ -100,32 +100,10 @@ aws ec2 describe-instances --filters "Name=tag:Role, Values=kubernetes-minion" -
 portworx.sh <public-ip> <cluster-name>
 ```
 +
-.. Check status of the provisioned drive:
+..Check status of the provisioned storage:
 +
 ```
 ssh -i ~/.ssh/kube_aws_rsa -o StrictHostKeyChecking=no ubuntu@<public-ip> "sudo /opt/pwx/bin/pxctl status"
-Status: PX is operational
-Node ID: 54b41d07-7508-4167-8438-32faf390263e
-	IP: 172.20.0.231 
- 	Local Storage Pool: 1 pool
-	Pool	Cos		Size	Used	Status	Zone	Region
-	0	COS_TYPE_LOW	128 GiB	2.0 GiB	Online	a	us-west-2
-	Local Storage Devices: 1 device
-	Device	Path		Media Type		Size		Last-Scan
-	0:1	/dev/xvdk	STORAGE_MEDIUM_SSD	128 GiB		07 Dec 16 00:19 UTC
-	total			-			128 GiB
-Cluster Summary
-	Cluster ID: couchbase_portworx2
-	Node IP: 172.20.0.231 - Capacity: 0 B/128 GiB Online (This node)
-Global Storage Pool
-	Total Used    	:  0 B
-	Total Capacity	:  128 GiB
-```
-+
-After all four nodes are provisioned with PWX container, status looks like:
-+
-```
-sudo /opt/pwx/bin/pxctl status
 Status: PX is operational
 Node ID: aa8b5ce9-dc23-4b98-b5c4-491b9edb619e
 	IP: 172.20.0.229 
