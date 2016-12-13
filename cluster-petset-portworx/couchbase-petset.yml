@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchbase
+  labels:
+    app: couchbase
+spec:
+  ports:
+  - port: 8091
+    name: couchbase
+  # *.couchbase.default.svc.cluster.local
+  clusterIP: None
+  selector:
+    app: couchbase
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchbase-ui
+  labels:
+    app: couchbase-ui
+spec:
+  ports:
+  - port: 8091
+    name: couchbase
+  selector:
+    app: couchbase
+  # sessionAffinity: ClientIP
+  type: LoadBalancer
+---
+apiVersion: apps/v1alpha1
+kind: PetSet
+metadata:
+  name: couchbase
+spec:
+  serviceName: "couchbase"
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: couchbase
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: couchbase
+        image: saturnism/couchbase:k8s-petset
+        ports:
+        - containerPort: 8091
+        volumeMounts:
+        - name: couchbase-claim
+          mountPath: /opt/couchbase/var
+        env:
+          - name: COUCHBASE_MASTER
+            value: "couchbase-0.couchbase.default.svc.cluster.local"
+          - name: AUTO_REBALANCE
+            value: "false"
+  volumeClaimTemplates:
+    - metadata:
+        name: couchbase-claim
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
