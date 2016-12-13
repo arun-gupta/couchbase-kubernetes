@@ -128,10 +128,24 @@ Global Storage Pool
 == Couchbase with Portworx on Kubernetes
 
 . Create 2 PWX volumes (on any Kubernetes worker host) - volumes are visible cluster-wide
-.. `sudo /opt/pwx/bin/pxctl volume create couchbase1`
-.. `sudo /opt/pwx/bin/pxctl volume create couchbase2`
++
+```
+sudo /opt/pwx/bin/pxctl volume create couchbase1
+sudo /opt/pwx/bin/pxctl volume create couchbase2
+```
++
 . Create 2 PV
-.. `./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/pv.yaml`
++
+```
+./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/pv.yaml
+```
++
+. Create Couchbase Petset
++
+```
+./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/couchbase-petset.yaml
+```
++
 
 == Misc
 
