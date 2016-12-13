@@ -100,7 +100,7 @@ aws ec2 describe-instances --filters "Name=tag:Role, Values=kubernetes-minion" -
 portworx.sh <public-ip> <cluster-name>
 ```
 +
-..Check status of the provisioned storage:
+.. Check status of the provisioned storage:
 +
 ```
 ssh -i ~/.ssh/kube_aws_rsa -o StrictHostKeyChecking=no ubuntu@<public-ip> "sudo /opt/pwx/bin/pxctl status"
