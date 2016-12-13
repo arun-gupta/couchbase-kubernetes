@@ -146,7 +146,7 @@ sudo /opt/pwx/bin/pxctl volume create couchbase2
 ./cluster/kubectl.sh create -f /Users/arungupta/workspaces/couchbase-kubernetes/cluster-petset-portworx/couchbase-petset.yaml
 ```
 +
-. Describe service using `kubectl.sh describe service/couchbase-ui`
+. Describe service using `kubectl.sh describe service/couchbase-ui`. Couchbase UI should be accessible at `LoadBalancer Ingress` value.
 
 == Misc
 
